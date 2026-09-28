@@ -1,0 +1,18 @@
+pipeline fluxo_pagamentos inicio
+
+    dados_vendas = extrair de arquivocsv("/datalake/vendas_brutas.csv")
+    dados_clientes = extrair de psql("select nome, sobrenome, salario, bonus from empregados where setor = 'COMERCIAL'")
+
+    nome_completo = transformar dados_clientes com concatenar(nome, sobrenome)
+    remuneracao_final = transformar dados_clientes com operacao(salario + bonus)
+
+    se linhas(dados_clientes) > 0 entao
+        carregar nome_completo em novo_csv("/datalake/clientes_tratados.csv")
+        carregar remuneracao_final em novo_banco("schema_analise.tabela_faturamento")
+    fimse
+
+    se linhas(dados_vendas) > 0 entao
+        carregar dados_vendas em novo_banco("schema_vendas.fatos_brutos")
+    fimse
+
+fim
