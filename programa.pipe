@@ -1,18 +1,13 @@
-pipeline fluxo_pagamentos inicio
+pipeline comissao_mensal inicio
+    vendas = extrair de arquivocsv("/datalake/vendas.csv")
+    vendedores = extrair de psql("select nome, sobrenome from vendedores where ativo = 1")
 
-    dados_vendas = extrair de arquivocsv("/datalake/vendas_brutas.csv")
-    dados_clientes = extrair de psql("select nome, sobrenome, salario, bonus from empregados where setor = 'COMERCIAL'")
+    comissoes = transformar vendas com operacao(valor * 5 / 100)
+    nomes = transformar vendedores com concatenar(nome, sobrenome)
 
-    nome_completo = transformar dados_clientes com concatenar(nome, sobrenome)
-    remuneracao_final = transformar dados_clientes com operacao(salario + bonus)
-
-    se linhas(dados_clientes) > 0 entao
-        carregar nome_completo em novo_csv("/datalake/clientes_tratados.csv")
-        carregar remuneracao_final em novo_banco("schema_analise.tabela_faturamento")
+    se linhas(vendas) > 0 entao
+        carregar comissoes em novo_banco("financeiro.comissoes_2026_09")
+    senao
+        carregar nomes em novo_csv("/datalake/alertas/sem_vendas_2026_09.csv")
     fimse
-
-    se linhas(dados_vendas) > 0 entao
-        carregar dados_vendas em novo_banco("schema_vendas.fatos_brutos")
-    fimse
-
 fim
