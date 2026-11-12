@@ -31,3 +31,72 @@ O projeto foi construído apenas com bibliotecas nativas do Python. Para testar 
 
 ```bash
 python main.py
+
+Exemplo de Saída (AST)
+Se a sintaxe do arquivo .pipe estiver correta, o compilador não lançará erros e retornará a árvore lexica/sintática estruturada, como no exemplo abaixo:
+
+-- Analisador Léxico --
+Token(KEYWORD, 'pipeline')
+Token(IDENTIFICADOR, 'comissao_mensal')
+Token(KEYWORD, 'inicio')
+Token(IDENTIFICADOR, 'vendas')
+Token(ATRIBUICAO, '=')
+Token(KEYWORD, 'extrair')
+Token(KEYWORD, 'de')
+Token(FUNCAO, 'arquivocsv')
+
+-- Analisador Sintático --
+
+{
+    "tipo": "Programa",
+    "nome": "comissao_mensal",
+    "comandos": [
+        {
+            "tipo": "Extracao",
+            "variavel": "vendas",
+            "fonte": "arquivocsv",
+            "alvo": "\"/datalake/vendas.csv\""
+        },
+        {
+            "tipo": "Extracao",
+            "variavel": "vendedores",
+            "fonte": "psql",
+            "alvo": "\"select nome, sobrenome from vendedores where ativo = 1\""
+        },
+        {
+            "tipo": "Transformacao",
+            "variavel": "comissoes",
+            "origem": "vendas",
+            "operacao": "operacao",
+            "argumentos": "valor * 5 / 100"
+        },
+        {
+            "tipo": "Transformacao",
+            "variavel": "nomes",
+            "origem": "vendedores",
+            "operacao": "concatenar",
+            "argumentos": "nome , sobrenome"
+        },
+        {
+            "tipo": "Condicional",
+            "condicao": "linhas(vendas) > 0",
+            "bloco_entao": [
+                {
+                    "tipo": "Carga",
+                    "variavel": "comissoes",
+                    "destino": "novo_banco",
+                    "caminho": "\"financeiro.comissoes_2026_09\""
+                }
+            ],
+            "bloco_senao": [
+                {
+                    "tipo": "Carga",
+                    "variavel": "nomes",
+                    "destino": "novo_csv",
+                    "caminho": "\"/datalake/alertas/sem_vendas_2026_09.csv\""
+                }
+            ]
+        }
+    ]
+}
+```
